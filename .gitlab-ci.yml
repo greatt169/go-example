@@ -1,0 +1,3 @@
+include:
+  - project: '4lapy/microservices/template/go-deploy/ci'
+    file: '/.gitlab-ci-tmp.yml'

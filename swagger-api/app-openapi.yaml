@@ -1,0 +1,373 @@
+openapi: 3.0.0
+info:
+  title: Микросервис Geo App
+  description: Микросервис для работы с местоположением пользователя
+  version: 1.0.0
+
+servers:
+  - url: https://krakend-test.aero.4lapy.ru/api/v1/
+    description: Staging server V1
+
+paths:
+  /geo/manage/health:
+    get:
+      summary: Проверка жизнеспособности сервиса
+      responses:
+        '200':
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref:  '#/components/schemas/geo_v1HealthResponse'
+        default:
+          description: An unexpected error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/runtimeError'
+      tags:
+        - Health
+
+  /geo/detectAddressInfo:
+    get:
+      summary: Определение информации о местоположении пользователя
+      parameters:
+        - in: header
+          name: X-B3-Traceid
+          description: id трассировки
+          schema:
+            type: string
+          example: "3fa24df9be9516346fae48bf14d6ee0c"
+        - in: header
+          name: X-B3-Spanid
+          description: id span
+          schema:
+            type: string
+          example: "a27a030a4d8fd2ed"
+        - in: header
+          name: X-B3-Sampled
+          description: id метки
+          schema:
+            type: string
+          example: "1"
+        - name: lat
+          in: query
+          required: true
+          description: Географическая широта
+          schema:
+            type: number
+            example: 57.6215477
+        - name: lon
+          in: query
+          required: true
+          description: Географическая долгота
+          schema:
+            type: number
+            example: 39.8977411
+      responses:
+        '200':
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref:  '#/components/schemas/geo_v1Location'
+      tags:
+        - Geo
+
+  /geo/suggest/address:
+    post:
+      summary: Возвращает Подсказки по местоположениям
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/suggestAddressParams'
+      parameters:
+        - in: header
+          name: X-B3-Traceid
+          description: id трассировки
+          schema:
+            type: string
+          example: "3fa24df9be9516346fae48bf14d6ee0c"
+        - in: header
+          name: X-B3-Spanid
+          description: id span
+          schema:
+            type: string
+          example: "a27a030a4d8fd2ed"
+        - in: header
+          name: X-B3-Sampled
+          description: id метки
+          schema:
+            type: string
+          example: "1"
+      responses:
+        '200':
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref:  '#/components/schemas/geo_v1LocationAddresses'
+      tags:
+        - Geo
+
+  /geo/findById/address:
+    get:
+      summary: Возвращает адрес по идентификатору ФИАС или КЛАДР
+      parameters:
+        - in: header
+          name: X-B3-Traceid
+          description: id трассировки
+          schema:
+            type: string
+          example: "3fa24df9be9516346fae48bf14d6ee0c"
+        - in: header
+          name: X-B3-Spanid
+          description: id span
+          schema:
+            type: string
+          example: "a27a030a4d8fd2ed"
+        - in: header
+          name: X-B3-Sampled
+          description: id метки
+          schema:
+            type: string
+          example: "1"
+        - name: query
+          required: true
+          description: ID fias или kladr
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref:  '#/components/schemas/geo_v1LocationAddress'
+      tags:
+        - Geo
+
+  /geo/top:
+    get:
+      summary: Возвращает список популярных местоположений для выбора
+      parameters:
+        - in: header
+          name: X-B3-Traceid
+          description: id трассировки
+          schema:
+            type: string
+          example: "3fa24df9be9516346fae48bf14d6ee0c"
+        - in: header
+          name: X-B3-Spanid
+          description: id span
+          schema:
+            type: string
+          example: "a27a030a4d8fd2ed"
+        - in: header
+          name: X-B3-Sampled
+          description: id метки
+          schema:
+            type: string
+          example: "1"
+      responses:
+        '200':
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref:  '#/components/schemas/geo_v1TopLocations'
+      tags:
+        - Geo
+
+components:
+  schemas:
+    suggestAddressParams:
+      type: object
+      title: Объект параметров метода подсказок
+      properties:
+       count:
+          title: Количество возвращаемых объектов
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+       query:
+          title: Поисковая строка по местоположениям
+          type: string
+          example: москва
+       fromBound:
+          description: |
+            Ограничение по типу местоположения (верхняя граница). Пример city - только города
+            Возможные значения:
+              1. ```region``` - Регион
+              2. ```city``` - Город
+              3. ```street``` - Улица
+              4. ```house``` - Дом
+              5. ```settlement``` - Населенный пункт
+          type: string
+          enum:
+            - region
+            - city
+            - street
+            - house
+            - settlement
+       toBound:
+          description: |
+            Ограничение по типу местоположения (нижняя граница). Пример city - только города.
+            Комбинация с filter.fromBound может задавать множество типов.
+            Возможные значения:
+              1. ```region``` - Регион
+              2. ```city``` - Город
+              3. ```street``` - Улица
+              4. ```house``` - Дом
+              5. ```settlement``` - Населенный пункт
+          type: string
+          enum:
+            - region
+            - city
+            - street
+            - house
+            - settlement
+       locations:
+          type: array
+          title: Ограничение по родителю (страна, регион, район, город, улица)
+          items:
+            type: object
+            properties:
+              regionFiasId:
+                description: Ограничение по ФИАС-коду региона родителя
+                type: string
+              cityFiasId:
+                description: Ограничение по ФИАС-коду города родителя
+                type: string
+              settlementFiasId:
+                description: Ограничение по ФИАС-коду населенного пункта родителя
+                type: string
+              streetFiasId:
+                description: Ограничение по ФИАС-коду улицы родителя
+                type: string
+              kladrId:
+                description: Ограничение по КЛАДР-коду родителя
+                type: string
+              regionName:
+                description: Ограничение по названию региона родителя
+                type: string
+              cityName:
+                description: Ограничение по названию города родителя
+                type: string
+              settlementName:
+                description: Ограничение по названию населенного пункта родителя
+                type: string
+              streetName:
+                description: Ограничение по названию улицы родителя
+                type: string
+
+    geo_v1HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+      title: Объект с информацией о работоспособности сервиса
+    geo_v1TopLocations:
+      type: array
+      items:
+        $ref:  '#/components/schemas/geo_v1TopLocation'
+      title: Массив с информацией по популярным местоположениям
+    geo_v1TopLocation:
+      title: Объект популярного местоположения
+      type: object
+      properties:
+        fiasId:
+          description: Код ФИАС
+          type: string
+          example: 8f238984-812b-4bb1-850b-49749fb5c56d
+        name:
+          description: Название местоположения
+          type: string
+          example: Ярославль
+    geo_v1Location:
+      title: Объект местоположения
+      type: object
+      properties:
+        fiasId:
+          description: Код ФИАС
+          type: string
+          example: 8f238984-812b-4bb1-850b-49749fb5c56d
+        kladrId:
+          description: Код КЛАДР
+          type: string
+          example: 7800000800000
+        rusRegionId:
+          description: Код региона РФ
+          type: integer
+          example: 76
+        regionFiasId:
+          description: Номер ФИАС региона
+          type: string
+          example: 8f238984-812b-4bb1-850b-49749fb5c56d
+        regionName:
+          description: Название области
+          type: string
+          example: Тверская область
+        areaName:
+          description: Название района
+          type: string
+          example: Некрасовский район
+        cityName:
+          description: Название города
+          type: string
+          example: Ярославль
+        settlementName:
+          description: Название населенного пункта
+          type: string
+          example: Рождество
+        typeCode:
+          description: Символьный код типа местоположения
+          type: string
+          example: city
+        typeName:
+          description: Название типа местоположения
+          type: string
+          example: город
+    geo_v1LocationAddresses:
+      type: array
+      items:
+        $ref:  '#/components/schemas/geo_v1LocationAddress'
+      title: Массив с информацией по адресам местоположений
+    geo_v1LocationAddress:
+      allOf:
+        - $ref: '#/components/schemas/geo_v1Location'
+        - type: object
+          title: Объект адреса местоположения
+          properties:
+            value:
+              description: Адрес одной строкой (как показывается в списке подсказок)
+              type: string
+            streetName:
+              description: Название Улицы
+              type: string
+            houseName:
+              description: Название дома
+              type: string
+            flatName:
+              description: Название квартиры
+              type: string
+
+
+    runtimeError:
+      title: Объект ошибки
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        debug:
+          type: string
