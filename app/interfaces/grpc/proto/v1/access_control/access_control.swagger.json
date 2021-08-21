@@ -1,0 +1,312 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "news-ms/app/interfaces/grpc/proto/v1/access_control/access_control.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/eapi/accesscontrol/manage/health": {
+      "get": {
+        "summary": "Проверка жизнеспособности сервиса",
+        "operationId": "AccessCheckService_CheckHealth",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/access_control_v1HealthResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "AccessCheckService"
+        ]
+      }
+    },
+    "/eapi/accesscontrol/metrics/authorization": {
+      "post": {
+        "summary": "Проверка жизнеспособности сервиса",
+        "operationId": "MetricsService_SetIsAuthorized",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/access_control_v1BaseResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/access_control_v1AuthorizationStatus"
+            }
+          }
+        ],
+        "tags": [
+          "MetricsService"
+        ]
+      }
+    },
+    "/eapi/accesscontrol/v1/privileges": {
+      "get": {
+        "summary": "Получение привилегий пользователя",
+        "operationId": "PrivilegesService_GetUserPrivileges",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/access_control_v1Privileges"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "PrivilegesService"
+        ]
+      }
+    },
+    "/eapi/accesscontrol/v1/user": {
+      "get": {
+        "summary": "Получение данных пользователя",
+        "operationId": "PrivilegesService_GetUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/access_control_v1UserInfo"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "PrivilegesService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "access_control_v1AuthorizationStatus": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      },
+      "title": "Объект статуса авторизации"
+    },
+    "access_control_v1BaseResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "access_control_v1Entities": {
+      "type": "object",
+      "properties": {
+        "news": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "привилегии для новостей, возможные значения:\n- create (создавать)\n- show_active (просматривать опубликованные)\n- show_deactivated (просматривать черновики)\n- show_delayed (просматривать отложенно опубликованные)\n- update_active (изменять опубликованные)\n- update_deactivated (изменять черновики)\n- delete_active (удалять опубликованные)\n- delete_deactivated (удалять черновики)\n- search (искать и видеть результаты поиска)\n- sort (сортировать по дате)\n- subscribe (подписаться на новости)\n- filter (фильтрация новостей)\n- show_news_detail (просматривать детальную страницу новостей)"
+        },
+        "promo": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "привилегии для акций, возможные значения:\n- create (создавать)\n- show_deactivated (просматривать черновики)\n- show_delayed (просматривать отложенно опубликованные\n- show_active (просматривать опубликованные)\n- update_active (изменять опубликованные)\n- update_deactivated (изменять черновики)\n- delete_active (удалять опубликованные)\n- delete_deactivated (удалять черновики)"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "привилегии для документов:\ncreate_folder (создать директорию)\nrename_folder (переименовать директорию)\ndelete_folder (удалить дирекорию)\npermission_folder (изменить права на директорию)\nshow_draft (просматривать директории-черновики)\nshow_all (просматривать все дирекории)\nshow_files (просматривать файлы в директории)\nadd_file (добавлять файлы в директории)\ndownload_file (скачивать файлы)\ndelete_file (удалять файлы)"
+        },
+        "calculations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "привилегии для взаиморасчетов:\nshow_documents (просматривать документы)\nshow_document_comment (просмотреть комментарий к документу)\nadd_document_comment (написать комментарий к документу)\napprove_document (согласовать документ)\ndisapprove_document (не согласовать документ)\ndownload_document (скачать документ)\nincome_form (заполнить форму, скачать шаблон)\nshow_income_list (скачать результат заполнения формы)"
+        },
+        "requests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "привилегии для заявок:\n- \"show_active_own\" - просмотреть список доступных заявок по prmId\n- \"show_active_all\" - просмотреть список заявок всех\n- \"filter_all\" - фильтровать заявки по всем атрибутам\n- \"filter_own\" - фильтровать заявки по атрибутам\n- \"create\" - создать заявку\n- \"show_detail_own\" - просмотреть детальную заявки\n- \"show_detail_all\" - просмотреть детальную заявки(без проверок принаддежности)\n- \"cancel\", - отменить заявку\n- \"edit\", - изменить заявку\n- \"reopen\" - открыть повторно"
+        },
+        "reports": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "привилегии для отчётов:\n- \"mailing_schedule\" - просмотреть или изменить расписание рассылки отчетов"
+        }
+      }
+    },
+    "access_control_v1HealthResponse": {
+      "type": "object",
+      "properties": {
+        "serviceName": {
+          "type": "string"
+        },
+        "serviceStatus": {
+          "type": "string"
+        }
+      },
+      "title": "Объект с информацией о работоспособности сервиса"
+    },
+    "access_control_v1Pages": {
+      "type": "object",
+      "properties": {
+        "main": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "login": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "calculations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "add_income_information (заполнить форму, скачать шаблон)\nshow_income_results (просмотреть / скачать результат заполнения формы)"
+        },
+        "requests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "access_control_v1Privileges": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "title": "uid пользователя"
+        },
+        "isAuthorized": {
+          "type": "boolean",
+          "format": "boolean",
+          "title": "авторизован ли пользователь"
+        },
+        "pages": {
+          "$ref": "#/definitions/access_control_v1Pages",
+          "title": "настройки доступа к страницам"
+        },
+        "entities": {
+          "$ref": "#/definitions/access_control_v1Entities",
+          "title": "настройки доступа к сущностям"
+        },
+        "pstxid": {
+          "type": "string",
+          "title": "id запроса"
+        }
+      }
+    },
+    "access_control_v1UserInfo": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "secondName": {
+          "type": "string"
+        },
+        "position": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+version: '3.2'
+
+services:
+  go-composer-backend: # Контейнер для сборки GolangApps. Содержит protobuf и горячую отладку (dev only)
+    image: registry.gitlab.microservice.ru/megafon/service/megafon-portal/go_composer_backend
+    container_name: ${PROJECT_NAME}_go_composer_backend
+    build:
+      context: ./.proto/.docker
+      dockerfile: ./go-composer/Dockerfile
+    volumes:
+      - ./.proto/scripts/:/scripts
+      - ./app/:/news-ms/app
+    command: sh /scripts/proto-gen.sh

@@ -1,0 +1,33 @@
+version: '3.2'
+services:
+  news-ms:
+    container_name: ${PROJECT_NAME}_golang_app
+    expose:
+      - ./app/:/app
+    build:
+      context: .
+      dockerfile: ./.docker/Dockerfile
+    ports:
+      - ${GRPC_PORT}:50051
+    environment:
+      - DB_DRIVER=${DB_DRIVER}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - GRPC_PORT=${GRPC_PORT}
+      - STORAGE_ENDPOINT=${MINIO_BACKEND_HOST}:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET=${MINIO_SECRET}
+      - ACCESS_CONTROL_GRPC_HOST=access-control-backend
+      - ACCESS_CONTROL_GRPC_PORT=${ACCESS_CONTROL_GRPC_PORT}
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${BACKEND_SUBNET}

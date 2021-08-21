@@ -1,0 +1,91 @@
+stages:
+  - build
+  - build-seed
+  - run-tests
+  - run-sonar
+  - deploy
+  - run-seed
+  - run-integration-tests
+
+build:
+  only:
+    - develop
+  stage: build
+  before_script:
+    - docker login -u oauth -p $YA_REGISTRY_KEY cr.yandex
+  script:
+    - docker build --ulimit nofile=65000:65000 -t cr.yandex/$YA_REGISTRY_ID/$CI_PROJECT_NAME:$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG-$CI_PIPELINE_ID -f .docker/Dockerfile .
+    - docker tag cr.yandex/$YA_REGISTRY_ID/$CI_PROJECT_NAME:$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG-$CI_PIPELINE_ID cr.yandex/$YA_REGISTRY_ID/$CI_PROJECT_NAME:$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG-latest
+    - docker push cr.yandex/$YA_REGISTRY_ID/$CI_PROJECT_NAME:$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG-latest
+    - docker push cr.yandex/$YA_REGISTRY_ID/$CI_PROJECT_NAME:$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG-$CI_PIPELINE_ID
+    - docker image rm cr.yandex/$YA_REGISTRY_ID/$CI_PROJECT_NAME:$CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG-$CI_PIPELINE_ID
+  tags:
+    - ms-docker-builder
+
+run-tests:
+  only:
+    - develop1
+  stage: run-tests
+  image: golang:alpine
+  allow_failure: true
+  script:
+    - cd app/
+    - go mod download
+    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go test -cover ./... -coverprofile cover.out.tmp &&  cat cover.out.tmp | grep -v "infrastructure/\|interfaces/" > cover.out && rm -rf cover.out.tmp
+    - go tool cover -func cover.out
+  artifacts:
+    paths:
+      - app/cover.out
+  tags:
+    - ms-docker-builder
+
+
+run-sonar:
+  only:
+    - develop1
+  stage: run-sonar
+  allow_failure: true
+  image: emeraldsquad/sonar-scanner
+  script:
+    - cd app/
+    - sonar-scanner -Dsonar.projectKey=microfactory.go-zero  -Dsonar.sources=. -Dsonar.host.url=http://sonarqube.microservice.ru -Dsonar.login=696dd050065f8327681d6ca20ebdaf99897fad43 -Dsonar.exclusions=**/*_test.go,**/interfaces/grpc/**,**/infrastructure/mock/**,**/cmd/cli/seeds/** -Dsonar.go.coverage.reportPaths=cover.out -Dsonar.coverage.exclusions=**/interfaces/**,**/infrastructure/**,**/cmd/** -Dsonar.qualitygate.wait=true
+  tags:
+    - ms-docker-builder
+
+
+deploy:
+  only:
+    - develop
+  tags:
+    - ms-docker-builder
+  stage: deploy
+  before_script:
+    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | base64 -d | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+  script:
+    - |
+      IFS="/"
+      set -- $CI_PROJECT_NAMESPACE
+      NS=$4
+      ssh -tt -o "StrictHostKeyChecking=no" $SSH_LOGIN@$SSH_HOST << EOF
+      rm -rf $CI_PROJECT_NAME
+      git clone -b $CI_COMMIT_REF_NAME --depth=5 --quiet $CI_REPOSITORY_URL
+      cd $CI_PROJECT_NAME/deploy/
+      sed -i 's/ $CI_PROJECT_NAME-.*/ $CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG-$CI_PIPELINE_ID/g' tags.yaml
+      sed -i 's/studentid/$NS/g' values.yaml
+      cat values.yaml
+      (
+        flock -e 200
+        cat /home/$SSH_LOGIN/helm/golang/templates/job.yaml
+        cat values.yaml
+        cat tags.yaml
+        helm upgrade -i --create-namespace -f tags.yaml -f values.yaml -n $NS-school $CI_PROJECT_NAME /home/$SSH_LOGIN/helm/golang/
+      ) 200>/tmp/$CI_PROJECT_NAME.lockfile
+      if [ "\$?" != 0 ]; then
+        exit 1
+      fi
+      exit
+      EOF

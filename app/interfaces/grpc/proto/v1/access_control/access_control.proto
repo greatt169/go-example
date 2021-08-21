@@ -1,0 +1,164 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+package access_control_v1;
+
+// Сервис для работы с привилегиями пользователя
+service PrivilegesService {
+    // Получение данных пользователя
+    rpc GetUser (EmptyRequest) returns (UserInfo) {
+        option (google.api.http) = {
+            get: "/eapi/accesscontrol/v1/user"
+        };
+    }
+    // Получение привилегий пользователя
+    rpc GetUserPrivileges (EmptyRequest) returns (Privileges) {
+        option (google.api.http) = {
+            get: "/eapi/accesscontrol/v1/privileges"
+        };
+    }
+}
+// Базовые методы проверки жизни сервиса
+service AccessCheckService {
+    // Проверка жизнеспособности сервиса
+    rpc CheckHealth (EmptyRequest) returns (HealthResponse) {
+        option (google.api.http) = {
+            get: "/eapi/accesscontrol/manage/health"
+        };
+    }
+}
+// Базовые методы проверки жизни сервиса
+service MetricsService {
+    // Проверка жизнеспособности сервиса
+    rpc SetIsAuthorized (AuthorizationStatus) returns (BaseResponse) {
+        option (google.api.http) = {
+            post: "/eapi/accesscontrol/metrics/authorization"
+            body: "*"
+        };
+    }
+}
+
+// Объект с информацией о работоспособности сервиса
+message HealthResponse {
+    string serviceName = 1;
+    string serviceStatus = 2;
+}
+
+message BaseResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message EmptyRequest {
+}
+
+message UserInfo {
+    string userId = 1; // uid пользователя
+    string name = 2; // Имя
+    string lastName = 3; // Фамилия
+    string secondName = 4; // Отчество
+    string position = 5; // Должность
+    string role = 6; // Роль
+}
+
+message Token {
+    string token = 1;
+}
+
+message Privileges {
+    // uid пользователя
+    string userId = 1;
+    // авторизован ли пользователь
+    bool isAuthorized = 2;
+    // настройки доступа к страницам
+    Pages pages = 3;
+    // настройки доступа к сущностям
+    Entities entities = 4;
+    // id запроса
+    string pstxid = 5;
+}
+
+message Pages {
+    repeated string main = 1;
+    repeated string login = 2;
+    // add_income_information (заполнить форму, скачать шаблон)
+    // show_income_results (просмотреть / скачать результат заполнения формы)
+    repeated string calculations = 3;
+    repeated string requests = 4;
+}
+
+message Entities {
+    // привилегии для новостей, возможные значения:
+    // - create (создавать)
+    // - show_active (просматривать опубликованные)
+    // - show_deactivated (просматривать черновики)
+    // - show_delayed (просматривать отложенно опубликованные)
+    // - update_active (изменять опубликованные)
+    // - update_deactivated (изменять черновики)
+    // - delete_active (удалять опубликованные)
+    // - delete_deactivated (удалять черновики)
+    // - search (искать и видеть результаты поиска)
+    // - sort (сортировать по дате)
+    // - subscribe (подписаться на новости)
+    // - filter (фильтрация новостей)
+    // - show_news_detail (просматривать детальную страницу новостей)
+    repeated string news = 1;
+
+    // привилегии для акций, возможные значения:
+    // - create (создавать)
+    // - show_deactivated (просматривать черновики)
+    // - show_delayed (просматривать отложенно опубликованные
+    // - show_active (просматривать опубликованные)
+    // - update_active (изменять опубликованные)
+    // - update_deactivated (изменять черновики)
+    // - delete_active (удалять опубликованные)
+    // - delete_deactivated (удалять черновики)
+    repeated string promo = 2;
+
+    // привилегии для документов:
+    // create_folder (создать директорию)
+    // rename_folder (переименовать директорию)
+    // delete_folder (удалить дирекорию)
+    // permission_folder (изменить права на директорию)
+    // show_draft (просматривать директории-черновики)
+    // show_all (просматривать все дирекории)
+    // show_files (просматривать файлы в директории)
+    // add_file (добавлять файлы в директории)
+    // download_file (скачивать файлы)
+    // delete_file (удалять файлы)
+    repeated string documents = 3;
+
+    // привилегии для взаиморасчетов:
+    // show_documents (просматривать документы)
+    // show_document_comment (просмотреть комментарий к документу)
+    // add_document_comment (написать комментарий к документу)
+    // approve_document (согласовать документ)
+    // disapprove_document (не согласовать документ)
+    // download_document (скачать документ)
+    // income_form (заполнить форму, скачать шаблон)
+    // show_income_list (скачать результат заполнения формы)
+    repeated string calculations = 4;
+
+    // привилегии для заявок:
+    // - "show_active_own" - просмотреть список доступных заявок по prmId
+    // - "show_active_all" - просмотреть список заявок всех
+    // - "filter_all" - фильтровать заявки по всем атрибутам
+    // - "filter_own" - фильтровать заявки по атрибутам
+    // - "create" - создать заявку
+    // - "show_detail_own" - просмотреть детальную заявки
+    // - "show_detail_all" - просмотреть детальную заявки(без проверок принаддежности)
+    // - "cancel", - отменить заявку
+    // - "edit", - изменить заявку
+    // - "reopen" - открыть повторно
+    repeated string requests = 5;
+
+    // привилегии для отчётов:
+    // - "mailing_schedule" - просмотреть или изменить расписание рассылки отчетов
+    repeated string reports = 6;
+}
+
+// Объект статуса авторизации
+message AuthorizationStatus {
+    bool success = 1;
+}

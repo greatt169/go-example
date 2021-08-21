@@ -1,0 +1,4 @@
+.idea/
+/.docker/data/
+/app/main
+/.env

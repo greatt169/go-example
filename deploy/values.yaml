@@ -1,0 +1,62 @@
+# Default values for news-ms.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: cr.yandex/crp552265kjr3a5fp0o3/news-ms
+  pullPolicy: IfNotPresent
+  tag: '{{ .Values.global.news_ms_tag }}'
+
+ports:
+  grpc: 50050
+  http: 8080
+  monitoring: 9090
+
+job:
+  command: ["./seeds"]
+
+ingress:
+  hostname: studentid-news-ms.microfactory.microservice.ru
+  paths:
+  - path: '/'
+    port: '8080'
+    service: news-ms
+  - path: '/metrics'
+    port: '9090'
+    service: news-ms
+
+nameOverride: ""
+fullnameOverride: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+vars:
+  GRPC_PORT: "50055"
+  DB_DRIVER: "postgres"
+  DB_HOST: "postgres.common-school"
+  DB_PASSWORD: "postgres"
+  DB_PORT: 5432
+  DB_NAME: studentid_news
+  DB_USER: "postgres"
+  S3_ACCESS_KEY: "W82QloZtV-l4H_FYC-4L"
+  S3_SECRET: "syVXdLcvvcbmBs4VfCZ3j9dh4lY6VhxT2hpIeh2E"
+  PROMETHEUS_PORT: 9090
+  ACCESS_CONTROL_GRPC_HOST: accesscontrol.common-school
+  ACCESS_CONTROL_GRPC_PORT: 50050
+  SERVER_PORT: 8080
+  API_PATH_SERVICE_NAME: news-ms
+  CREDENTIALS_FROM_VAULT: false
+  VAULT_URL: http://vault.megafon.microservice.ru
+  VAULT_MOUNT_POINT: BSS
+  VAULT_SECRET_ID: a6ba2eb9-d934-d094-69b2-81ee02457e28
+  VAULT_ROLE_ID: 39e02299-290f-56a7-ee3a-c01962bbbbd1
+  VAULT_SECRETS_BASE_PATH: AEROPORTAL/test/news-ms
+  S3_ENDPOINT: storage.yandexcloud.net
+  S3_REGION: ru-central1
+  S3_BUCKET: studentid-news
